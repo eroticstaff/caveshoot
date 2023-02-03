@@ -4,17 +4,17 @@
 #include <iostream>
 
 int main() {
-  sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
+  sf::RenderWindow window(sf::VideoMode(3000, 1000), "My window");
 
   TextureManager::instance()->loadTextureFromFile(
-      "floor", "../resources/tiles/floor/floor_side4.png", {{0, 0}, {16, 16}});
+      "floor", "../resources/rifle/idle/idle.png", {{0, 0}, {313, 313}});
 
   GameObject g;
 
   g.setSpriteFromTextureManager("floor");
 
   g.setPosition(100, 0);
-  g.setScale(5, 5);
+  g.setScale(0.8, 0.8);
   // run the program as long as the window is open
   while (window.isOpen()) {
     // check all the window's events that were triggered since the last
