@@ -2,30 +2,32 @@
 
 #include <SFML/Graphics.hpp>
 #include <exception>
-#include <string.h>
+#include <string>
 #include <unordered_map>
+#include <memory>
 
 class TextureManager {
-  std::unordered_map<std::string, sf::Texture *> storage;
+    using TexturePointer = std::shared_ptr<sf::Texture>;
+    std::unordered_map<std::string, TexturePointer> storage;
 
 private:
-  TextureManager() = default;
+    TextureManager() = default;
+
+    TextureManager(const TextureManager &) = default;
+
+    TextureManager &operator=(const TextureManager &) = default;
 
 public:
-  static TextureManager *instance() {
-    static TextureManager tm;
-    return &tm;
-  }
 
-  sf::Texture *loadTextureFromFile(const std::string &name,
-                                   const std::string &texture_path,
-                                   const sf::IntRect &area);
 
-  sf::Texture *getTextureByName(const std::string &name);
-
-  ~TextureManager() {
-    for (auto tuple : storage) {
-      delete tuple.second;
+    static TextureManager *instance() {
+        static TextureManager tm;
+        return &tm;
     }
-  }
+
+    TexturePointer loadTextureFromFile(const std::string &name,
+                                       const std::string &texture_path,
+                                       const sf::IntRect &area);
+
+    TexturePointer getTextureByName(const std::string &name);
 };

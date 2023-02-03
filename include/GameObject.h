@@ -1,17 +1,21 @@
+#pragma once
+
 #include <SFML/Graphics.hpp>
+#include <utility>
 
 class GameObject : public sf::Drawable, public sf::Transformable {
-  sf::Sprite m_sprite;
+    sf::Sprite m_sprite;
 
 public:
-  GameObject(sf::Sprite sprite) : m_sprite(sprite) {}
-  GameObject() = default;
+    explicit GameObject(sf::Sprite sprite) : m_sprite(std::move(sprite)) {}
 
-  void setSpriteFromFile(const std::string &texture_path,
-                         const sf::IntRect &areath);
+    GameObject() = default;
 
-  void setSpriteFromTextureManager(const std::string &name);
+    void setSpriteFromFile(const std::string &texture_path,
+                           const sf::IntRect &areath);
+
+    void setSpriteFromTextureManager(const std::string &name);
 
 private:
-  void draw(sf::RenderTarget &target, sf::RenderStates states) const override;
+    void draw(sf::RenderTarget &target, sf::RenderStates states) const override;
 };

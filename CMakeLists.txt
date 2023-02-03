@@ -8,7 +8,7 @@ find_package(SFML 2.5 COMPONENTS graphics audio REQUIRED)
 
 file(GLOB src_files ./src/*.cpp)
 
-add_executable(caveshoot ${src_files})
+add_executable(caveshoot ${src_files} src/Game.cpp include/Game.h)
 
 target_include_directories(caveshoot PUBLIC ./include)
 
