@@ -1,64 +1,66 @@
 #include "Game.h"
 #include "TextureManager.h"
+#include "imgui-SFML.h"
+#include "imgui.h"
+#include "Player.h"
+#include "Bullet.h"
 #include <SFML/Graphics.hpp>
+#include <iostream>
 
 Game::Game(int screenWidth, int screenHeight, int FPS, const std::string &title) : screenWidth(screenWidth),
                                                                                    screenHeight(screenHeight),
                                                                                    FPS(FPS) {
     window = std::make_unique<sf::RenderWindow>(sf::VideoMode(screenWidth, screenHeight), title);
+    ImGui::SFML::Init(*window);
+    window->setFramerateLimit(FPS);
 }
 
 void Game::ProcessEvents() {
     sf::Event event{};
     while (window->pollEvent(event)) {
+        ImGui::SFML::ProcessEvent(*window, event);
         if (event.type == sf::Event::Closed)
             window->close();
         if (event.type == sf::Event::Resized) {
-            // keep aspect ratio of the window
-            // fixme please
-            auto aspectRatio = static_cast<float>(screenWidth) / screenHeight;
-            auto newWidth = event.size.height * aspectRatio;
-            auto newHeight = event.size.width / aspectRatio;
-            if (newWidth > event.size.width) {
-                window->setSize({static_cast<unsigned int>(newWidth),
-                                 event.size.height});
-            } else {
-                window->setSize({event.size.width,
-                                 static_cast<unsigned int>(newHeight)});
-            }
+            // keep consistent view
+            sf::FloatRect visibleArea(0, 0, event.size.width, event.size.height);
+            window->setView(sf::View(visibleArea));
+
+        }
+        for (auto &gameObject: gameObjects) {
+            gameObject->ProcessEvents(event);
         }
     }
 }
 
 void Game::run() {
-    TextureManager::instance()->loadTextureFromFile("floor",
+    TextureManager::instance()->loadTextureFromFile("player",
                                                     "../resources/rifle/idle/idle.png",
                                                     {{0,   0},
                                                      {313, 313}});
+    TextureManager::instance()->loadTextureFromFile("bullet",
+                                                    "../resources/props_itens/barrel.png",
+                                                    {{0,  0},
+                                                     {16, 16}});
 
-    auto g = std::make_unique<GameObject>();
-    g->setSpriteFromTextureManager("floor");
-    g->setPosition(100, 0);
-    g->setScale(0.8, 0.8);
-    gameObjects.push_back(std::move(g));
+    auto player = std::make_unique<Player>();
+    player->setSpriteFromTextureManager("player");
+    gameObjects.push_back(std::move(player));
 
     sf::Clock clock;
-    sf::Time timePerFrame = sf::seconds(1.0f / FPS);
-    sf::Time timePerAnimation = sf::seconds(1.0f / 10);
-    sf::Time timeSinceLastUpdate = sf::Time::Zero;
-    sf::Time timeSinceLastAnimation = sf::Time::Zero;
-
 
     while (window->isOpen()) {
+        ProcessEvents();
         auto deltaTime = clock.restart();
-        timeSinceLastUpdate += deltaTime;
-        timeSinceLastAnimation += deltaTime;
-        while (timeSinceLastUpdate > timePerFrame) {
-            timeSinceLastUpdate -= timePerFrame;
-            ProcessEvents();
-            update(timePerFrame);
-        }
+        update(deltaTime);
         draw(deltaTime);
+    }
+}
+
+void Game::update(sf::Time deltaTime) {
+    ImGui::SFML::Update(*window, deltaTime);
+    for (auto &gameObject: gameObjects) {
+        gameObject->update(deltaTime);
     }
 }
 
@@ -67,9 +69,43 @@ void Game::draw(sf::Time deltaTime) {
     for (auto &gameObject: gameObjects) {
         window->draw(*gameObject);
     }
+    // draw point at cursor position
+    sf::CircleShape shape(2);
+    shape.setFillColor(sf::Color::Red);
+    shape.setPosition(sf::Mouse::getPosition(*window).x, sf::Mouse::getPosition(*window).y);
+    window->draw(shape);
+    draw_gui(sf::Time());
     window->display();
 }
 
-void Game::update(sf::Time deltaTime) {
+void Game::draw_gui(sf::Time deltaTime) {
+
+    ImGui::Begin("Hello, world!");
+    ImGui::SliderFloat("Player Speed", &Player::speed, 0.0f, 1000.0f);
+    ImGui::SliderFloat("Bullet Speed", &Bullet::speed, 0.0f, 10.0f);
+    ImGui::Text("Number of game objects: %zu", gameObjects.size());
+    ImGui::End();
+
+    ImGui::SFML::Render(*window);
+}
+
+Game::~Game() {
+    ImGui::SFML::Shutdown();
 
 }
+
+void Game::addGameObject(std::unique_ptr<GameObject> gameObject) {
+    gameObjects.push_back(std::move(gameObject));
+}
+
+void Game::removeGameObject(GameObject *gameObject) {
+//    gameObjects.erase(std::remove_if(gameObjects.begin(), gameObjects.end(),
+//                                     [gameObject](const std::unique_ptr<GameObject> &obj) {
+//                                         return obj.get() == gameObject;
+//                                     }), gameObjects.end());
+}
+
+sf::RenderWindow *Game::getWindow() const {
+    return window.get();
+}
+

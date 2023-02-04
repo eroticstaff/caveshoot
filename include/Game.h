@@ -15,7 +15,22 @@ public:
 
     void draw(sf::Time deltaTime);
 
+    void draw_gui(sf::Time deltaTime);
+
     void update(sf::Time deltaTime);
+
+    ~Game();
+
+    static Game *get_instance() {
+        static Game instance(800, 600, 30, "Test");
+        return &instance;
+    }
+
+    void addGameObject(std::unique_ptr<GameObject> gameObject);
+
+    void removeGameObject(GameObject *gameObject);
+
+    sf::RenderWindow *getWindow() const;
 
 private:
     int screenWidth = 800;

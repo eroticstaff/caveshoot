@@ -5,7 +5,6 @@
 #include <Game.h>
 
 int main() {
-    Game g(800, 600, 300, "Test");
-    g.run();
+    Game::get_instance()->run();
     return 0;
 }
