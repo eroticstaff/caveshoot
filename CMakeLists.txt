@@ -11,7 +11,7 @@ file(GLOB imgui_files ./3rd/imgui/*.cpp)
 
 find_package(OpenGL REQUIRED)
 
-add_executable(caveshoot ${imgui_files} include/Exceptions.h include/Game.h include/GameObject.h include/Player.h include/TextureManager.h src/Game.cpp src/GameObject.cpp src/main.cpp src/Player.cpp src/TextureManager.cpp src/Bullet.cpp src/Bullet.h)
+add_executable(caveshoot ${imgui_files} include/Exceptions.h include/Game.h include/GameObject.h include/Player.h include/TextureManager.h src/Game.cpp src/GameObject.cpp src/main.cpp src/Player.cpp src/TextureManager.cpp src/Bullet.cpp include/Bullet.h)
 
 target_include_directories(caveshoot PUBLIC ./include)
 
