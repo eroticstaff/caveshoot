@@ -57,7 +57,7 @@ void Player::ProcessEvents(sf::Event &event) {
     }
     if (event.type == sf::Event::MouseButtonPressed) {
         if (event.mouseButton.button == sf::Mouse::Left) {
-            spawnBullet();
+//            spawnBullet();
         }
     }
 }

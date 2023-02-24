@@ -4,8 +4,11 @@
 #include "imgui.h"
 #include "Player.h"
 #include "Bullet.h"
+#include "CompositeGameObject.h"
 #include <SFML/Graphics.hpp>
 #include <iostream>
+
+#define LOG(x) std::cout << x << std::endl;
 
 Game::Game(int screenWidth, int screenHeight, int FPS, const std::string &title) : screenWidth(screenWidth),
                                                                                    screenHeight(screenHeight),
@@ -13,6 +16,7 @@ Game::Game(int screenWidth, int screenHeight, int FPS, const std::string &title)
     window = std::make_unique<sf::RenderWindow>(sf::VideoMode(screenWidth, screenHeight), title);
     ImGui::SFML::Init(*window);
     window->setFramerateLimit(FPS);
+    ImGui::GetIO().FontGlobalScale = 3;
 }
 
 void Game::ProcessEvents() {
@@ -26,6 +30,11 @@ void Game::ProcessEvents() {
             sf::FloatRect visibleArea(0, 0, event.size.width, event.size.height);
             window->setView(sf::View(visibleArea));
 
+        }
+        if (event.type == sf::Event::KeyPressed) {
+            if (event.key.code == sf::Keyboard::Key::Q) {
+                window->close();
+            }
         }
         for (auto &gameObject: gameObjects) {
             gameObject->ProcessEvents(event);
@@ -47,11 +56,24 @@ void Game::run() {
     player->setSpriteFromTextureManager("player");
     gameObjects.push_back(std::move(player));
 
+    // create composite game object
+    auto compositeGameObject = std::make_unique<CompositeGameObject>();
+    for (int i = 0; i < 10; i++) {
+        auto bullet = std::make_unique<Bullet>();
+        bullet->setSpriteFromTextureManager("bullet");
+        bullet->setPosition({(float) i * 10, (float) i * 10});
+        compositeGameObject->addChild(bullet.release());
+    }
+    CompositeGameObject *weakCompositeGameObject = compositeGameObject.get();
+    gameObjects.push_back(std::move(compositeGameObject));
+
     sf::Clock clock;
 
     while (window->isOpen()) {
         ProcessEvents();
         auto deltaTime = clock.restart();
+        if (weakCompositeGameObject)
+            weakCompositeGameObject->setPosition(weakCompositeGameObject->getPosition() + sf::Vector2f(1, 1));
         update(deltaTime);
         draw(deltaTime);
     }
@@ -62,6 +84,7 @@ void Game::update(sf::Time deltaTime) {
     for (auto &gameObject: gameObjects) {
         gameObject->update(deltaTime);
     }
+    network.recieve();
 }
 
 void Game::draw(sf::Time deltaTime) {
@@ -79,11 +102,25 @@ void Game::draw(sf::Time deltaTime) {
 }
 
 void Game::draw_gui(sf::Time deltaTime) {
-
     ImGui::Begin("Hello, world!");
     ImGui::SliderFloat("Player Speed", &Player::speed, 0.0f, 1000.0f);
     ImGui::SliderFloat("Bullet Speed", &Bullet::speed, 0.0f, 10.0f);
     ImGui::Text("Number of game objects: %zu", gameObjects.size());
+
+    ImGui::InputText("Command", command, 100);
+    ImGui::Text(network.isConnected() != sf::Socket::Done ? "error" : "connected");
+    if (ImGui::Button("Run command")) {
+        std::cout << command << std::endl;
+        network.send(command);
+    }
+    if (ImGui::Button("connect to server")) {
+        network.connect();
+    }
+    if (ImGui::Button("exit")) {
+        window->close();
+    }
+    ImGui::TextColored(ImVec4{0, 1, 0, 1}, network.get_result().c_str());
+
     ImGui::End();
 
     ImGui::SFML::Render(*window);
@@ -108,4 +145,3 @@ void Game::removeGameObject(GameObject *gameObject) {
 sf::RenderWindow *Game::getWindow() const {
     return window.get();
 }
-

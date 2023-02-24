@@ -4,6 +4,7 @@
 #include <memory>
 #include <SFML/Graphics/RenderWindow.hpp>
 #include "GameObject.h"
+#include <Network.h>
 
 class Game {
 public:
@@ -22,7 +23,7 @@ public:
     ~Game();
 
     static Game *get_instance() {
-        static Game instance(800, 600, 30, "Test");
+        static Game instance(1920, 1080, 30, "Test");
         return &instance;
     }
 
@@ -33,10 +34,13 @@ public:
     sf::RenderWindow *getWindow() const;
 
 private:
+    char command[100];
+    Network network;
     int screenWidth = 800;
     int screenHeight = 600;
     int FPS = 300;
     std::unique_ptr<sf::RenderWindow> window;
     std::vector<std::unique_ptr<GameObject>> gameObjects;
+
 };
 
